@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHIORRI Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-900 text-white min-h-screen p-6 font-sans">
+  <div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- HEADER -->
+    <div class="text-center">
+      <h1 class="text-3xl font-bold text-blue-400">Analizador Financiero con IA</h1>
+      <p class="text-slate-400 mt-2">
+        Sube tus documentos, valida los datos y exporta a PowerBI
+      </p>
+    </div>
+
+    <!-- INITIAL UPLOAD -->
+    <div id="upload_section"
+      class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl"
+    >
+      <form id="initial_form" class="space-y-4">
+        <div
+          class="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
+          <input type="file" id="file_input" class="hidden"
+            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.csv,.xls,.xlsx, .txt" multiple required
+          >
+          <label for="file_input" class="cursor-pointer block">
+            <div id="file_label" class="text-lg font-semibold text-slate-300">
+              Selecciona o arrastra tus archivos
+            </div>
+            <p class="text-sm text-slate-500 mt-1">Soporta PDFs, Imágenes, Excel, CSV, Word</p>
+          </label>
+        </div>
+        
+        <div>
+          <label class="block text-sm text-slate-400 mb-1">
+            Instrucciones para la IA (Opcional):
+          </label>
+          <input type="text" id="initial_prompt"
+            class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-white focus:border-blue-500 focus:outline-none"
+            placeholder="Ej: Extrae los ingresos y egresos de la tabla 2..."
+          >
+        </div>
+        <button type="submit" id="btn_analyze_initial"
+          class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold transition-all disabled:opacity-50">
+          Iniciar Análisis
+        </button>
+      </form>
+    </div>
+
+    <!-- PHASE 2: CHAT AND RESULTS (Hidden initially) -->
+    <div id="chat_section"
+      class="hidden bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl flex flex-col gap-4">
+
+      <!-- Extracted Data Display -->
+      <div
+        class="bg-slate-900 p-4 rounded-lg border border-slate-600 grid grid-cols-2 gap-4"
+      >
+        <div>
+          <span class="text-xs text-slate-400 uppercase tracking-wider">
+            Ingresos (Income)
+          </span>
+          <div id="display_income" class="text-xl font-mono text-green-400 font-bold">--
+          </div>
+        </div>
+
+        <div>
+          <span class="text-xs text-slate-400 uppercase tracking-wider">
+            Egresos (Outcome)
+          </span>
+          <div id="display_outcome" class="text-xl font-mono text-red-400 font-bold">--
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat History -->
+      <div id="chat_history_box"
+        class="bg-slate-900 border border-slate-700 rounded-lg p-4 h-64 overflow-y-auto space-y-3 flex flex-col text-sm">
+        <!-- Messages will appear here -->
+      </div>
+
+      <!-- Correction Controls -->
+      <form id="correction_form" class="flex gap-2 mt-2">
+        <input type="text" id="correction_prompt"
+          class="flex-1 bg-slate-900 border border-slate-600 rounded p-3 text-white focus:border-blue-500 focus:outline-none"
+          placeholder="Ej: Te equivocaste, el ingreso es 5000..." required
+        >
+        <button type="submit" id="btn_correct"
+          class="bg-yellow-600 hover:bg-yellow-500 px-6 font-bold rounded transition-colors disabled:opacity-50">
+          Ajustar
+        </button>
+      </form>
+
+      <p id="attempts_remaining" class="text-xs text-right text-slate-400">
+        Intentos restantes: 5
+      </p>
+
+      <!-- Generate Power BI & Cancel -->
+      <hr class="border-slate-700 my-2">
+      <div class="flex gap-3">
+
+        <button id="btn_cancel"
+          class="w-1/3 bg-slate-600 hover:bg-slate-500 py-3 rounded-lg font-bold transition-all">
+          Cancelar
+        </button>
+
+        <button id="btn_generate"
+          class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+          Generar JSON para Power BI
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // APPLICATION STATE
+    let files_resources = null;
+    let chat_history = [];
+    let current_data = { income: "0", outcome: "0" };
+    let interaction_count = 0;
+    const MAX_INTERACTIONS = 6; // 1 initial + 5 corrections
+
+    // DOM ELEMENTS
+    const file_input = document.getElementById('file_input');
+    const file_label = document.getElementById('file_label');
+    const initial_form = document.getElementById('initial_form');
+    const correction_form = document.getElementById('correction_form');
+    const upload_section = document.getElementById('upload_section');
+    const chat_section = document.getElementById('chat_section');
+    const chat_history_box = document.getElementById('chat_history_box');
+    const btn_generate = document.getElementById('btn_generate');
+    const btn_cancel = document.getElementById('btn_cancel');
+    const btn_analyze_initial = document.getElementById('btn_analyze_initial');
+    const btn_correct = document.getElementById('btn_correct');
+    const input_correction = document.getElementById('correction_prompt');
+    const attempts_text = document.getElementById('attempts_remaining');
+
+    // Update file name visually
+    file_input.addEventListener('change', (e) => {
+
+      if (e.target.files.length > 1) {
+        file_label.textContent = `${e.target.files.length} archivos seleccionados`;
+      } else if (e.target.files.length === 1) {
+        file_label.textContent = e.target.files[0].name;
+      }
+    });
+
+    // 1. INITIAL SUBMISSION
+    initial_form.addEventListener('submit', async (e) => {
+
+      e.preventDefault();
+      const prompt = document.getElementById('initial_prompt').value || "Cuales son los 2 primero números.";
+
+      btn_analyze_initial.disabled = true;
+      btn_analyze_initial.textContent = "Procesando...";
+
+      const form_data = new FormData();
+      
+      for (let i = 0; i < file_input.files.length; i++) {
+        form_data.append('files[]', file_input.files[i]);
+      }
+
+      form_data.append('prompt', prompt);
+
+      try {
+
+        console.log("form d:", form_data.entries());
+        
+        const response = await fetch('/analyze', { method: 'POST', body: form_data });
+
+        console.log("Genera Error cuando se adjunta un archivo con caracteres especiales como el '%' WHY?");
+        console.log(response);
+        
+        const data = await response.json();
+
+        console.log("DATA 1st analysis:", data);
+        
+        if (!response.ok) throw new Error(data.error || "Unknown error");
+
+        // Save state
+        files_resources = data.files;        
+        current_data = { income: data.income, outcome: data.outcome };
+        interaction_count++;
+
+        // Update UI
+        update_data_ui();
+        add_message("user", prompt);
+        add_message("ai", data.ai_msg);
+
+        upload_section.classList.add('hidden');
+        chat_section.classList.remove('hidden');
+        update_counter();
+
+      } catch (error) {
+        console.log("Error: " + error);
+        btn_analyze_initial.disabled = false;
+        btn_analyze_initial.textContent = "Iniciar Análisis";
+      }
+    });
+
+    // 2. CORRECTION SUBMISSION
+    correction_form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (interaction_count >= MAX_INTERACTIONS) return;
+
+      const prompt = input_correction.value;
+      btn_correct.disabled = true;
+
+      // Add user attempt to history
+      chat_history.push({ role: "user", text: prompt });
+      add_message("user", prompt);
+      input_correction.value = "";
+
+      try {
+        // For corrections we send JSON, not FormData
+        console.log(files_resources);
+        
+        const payload = {
+          files_resources,
+          history: chat_history
+        };
+        console.log(payload);
+        
+
+        const response = await fetch('/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+
+        console.log("DATA adjustment ", interaction_count, data);
+        
+        if (!response.ok) throw new Error(data.error || "Unknown error");
+
+        // Update state and UI
+        current_data = { income: data.income, outcome: data.outcome };
+        update_data_ui();
+
+        chat_history.push({ role: "ai", text: data.ai_msg });
+        add_message("ai", data.ai_msg);
+
+        interaction_count++;
+        update_counter();
+
+      } catch (error) {
+
+        alert("Error: " + error.message);
+        chat_history.pop(); // Revert history if failed
+
+      } finally {
+        if (interaction_count < MAX_INTERACTIONS) btn_correct.disabled = false;
+      }
+    });
+
+    // 3. GENERATE POWER BI
+    btn_generate.addEventListener('click', async () => {
+      btn_generate.disabled = true;
+      btn_generate.innerHTML = "Generando...";
+
+      try {
+        const response = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(current_data)
+        });
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.error);
+
+        // Download JSON
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `power_bi_data_${Date.now()}.json`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+      } catch (error) {
+        
+        alert("Error: " + error.message);
+
+      } finally {
+        btn_generate.disabled = false;
+        btn_generate.innerHTML = "Generar JSON para Power BI";
+      }
+    });
+
+    // 4. CANCEL AND RESET
+    btn_cancel.addEventListener('click', () => {
+      // Reset state variables
+      files_resources = null;
+      chat_history = [];
+      current_data = { income: "0", outcome: "0" };
+      interaction_count = 0;
+
+      // Reset UI Inputs
+      file_input.value = "";
+      file_label.textContent = "Selecciona o arrastra tus archivos";
+      document.getElementById('initial_prompt').value = "";
+
+      // Clear Chat and Inputs
+      chat_history_box.innerHTML = "";
+      input_correction.value = "";
+      input_correction.disabled = false;
+      input_correction.placeholder = "Ej: Te equivocaste, el ingreso es 5000...";
+
+      // Enable Buttons
+      btn_correct.disabled = false;
+      btn_analyze_initial.disabled = false;
+      btn_analyze_initial.textContent = "Iniciar Análisis";
+
+      // Switch Sections (Hide Chat, Show Upload)
+      chat_section.classList.add('hidden');
+      upload_section.classList.remove('hidden');
+
+      // Update Counters and Displays
+      update_counter();
+      update_data_ui();
+    });
+    
+    // UI HELPER FUNCTIONS
+    function update_data_ui() {
+      document.getElementById('display_income').textContent = current_data.income;
+      document.getElementById('display_outcome').textContent = current_data.outcome;
+    }
+
+    function add_message(role, text) {
+      const div = document.createElement('div');
+      div.className = `p-3 rounded-lg max-w-[85%] ${role === 'user' ? 'bg-blue-600 self-end text-right' : 'bg-slate-700 self-start text-left border border-slate-600'}`;
+      div.innerHTML = `<span class="block text-xs opacity-70 mb-1">${role === 'user' ? 'Tú' : 'Gemini IA'}</span>${text}`;
+      chat_history_box.appendChild(div);
+      chat_history_box.scrollTop = chat_history_box.scrollHeight;
+    }
+
+    function update_counter() {
+      const remaining = MAX_INTERACTIONS - interaction_count;
+      attempts_text.textContent = `Intentos restantes: ${remaining}`;
+      if (remaining <= 0) {
+        input_correction.disabled = true;
+        btn_correct.disabled = true;
+        input_correction.placeholder = "Límite de intentos alcanzado.";
+      }
+    }
+  </script>
+</body>
+
+</html>
