@@ -17,13 +17,10 @@ use dotenv::dotenv;
 // };
 use serde_json::{json, Value};
 
-
-mod types;
-mod errors;
-mod analyze;
-mod file_management;
-mod gemini;
-mod power_bi;
+mod routes;
+mod services;
+mod models;
+mod utils;
 
 
 #[tokio::main]
@@ -37,7 +34,7 @@ async fn main() {
   // Configurar la ruta para el frontend y la API
   let app = Router::new()
     // Load front
-    .fallback_service(ServeDir::new("static"))
+    .fallback_service(ServeDir::new("frontend"))
 
     // The /analyze endpoint receives both initial upload (Multipart) 
     // and chat corrections (JSON)

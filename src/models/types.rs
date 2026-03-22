@@ -48,6 +48,14 @@ pub struct FinancialAnalysis {
   pub income: String,
   pub outcome: String,
   pub currency: String,
+  /* 
+  pub step1_audit_comparison: String,
+  pub step2_fraud_detection: String,
+  pub step3_access_anomalies: String,
+  pub step4_payroll_inconsistencies: String,
+  pub step5_financial_comparison: String,
+  pub power_bi_data: Vec<>,
+   */
   pub ai_msg: String,
   pub files: Vec<FileResource>
 }

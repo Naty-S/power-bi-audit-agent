@@ -4,33 +4,10 @@ use std::env;
 
 use crate::{
   errors::AppError,
-  types::*
+  types::*,
+  constants::*
 };
 
-
-const BASE_API_URL: &str = "https://generativelanguage.googleapis.com/";
-const BASE_PROMPT: &str = "You are a financial analyst. Analyze the document provided. \
-  You MUST return a raw JSON object (no markdown) with exactly these keys: \
-  'income' (1st number found, as string), 'outcome' (2nd number found, as string), \
-  'ai_message' (a polite, short summary of what you found, in Spanish). If values are not found, use '0'.";
-
-const P: &str = "You are a \
-Sigue estos pasos para el análisis financiero
-1. Realizar un análisis detallado actual de la data anexa comparando con el informe de auditoría anterior. \
-2. Detectar posibles desvíos o fraude financiero que representa un riesgo económico para la organización, y realizar un análisis del hallazgo \
-3. En función al reporte de acceso de usuario al sistema, anexo, determinar el ingreso de personas luego del horario laboral (entre 7pm y 6am) \
-4. Se anexa el listado de empleados activos y el reporte de nómina, verificar inconsistencias como empleados que no están activos pero están en el reporte de nómina emitido por el banco.
-5. Realizar un análisis comparativo entre: el Estado Financiero, estado de ganancias y pérdidas con el balance de ingresos, egresos y compras.
-6. Luego de todo el análisis realizar un cuadro excel para ingresar a Power BI, para desarrollar los dashboard y un reporte final de la auditoría.
-
-You MUST return a raw JSON object (no markdown) with exactly these keys: \
-'' result from step 1
-'' result from step 2
-'' result from step 3
-'' result from step 4
-'' result from step 5
-'' result from step 6
-";
 
 // ==========================================
 // Analysis functions
