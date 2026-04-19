@@ -5,7 +5,7 @@ use axum::{
 };
 use serde_json::json;
 
-use crate::types::FinancialAnalysis;
+use crate::models::types::FinancialAnalysis;
 
 
 // Recibe la estructura pura que vino de Gemini y la prepara para la descarga

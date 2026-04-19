@@ -2,10 +2,10 @@ use reqwest::{Client, multipart::{Part, Form}};
 use serde_json::{json, Value};
 use std::env;
 
-use crate::{
+use crate::utils::constants::*;
+use crate::models::{
   errors::AppError,
   types::*,
-  constants::*
 };
 
 

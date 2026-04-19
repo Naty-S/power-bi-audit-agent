@@ -7,9 +7,10 @@ use mime_guess;
 use calamine::{Reader, open_workbook_auto_from_rs};
 use zip::ZipArchive;
 
-use crate::errors::AppError;
-use crate::types::{AnalysisRequest, FileBuffer};
-
+use crate::models::{
+  errors::AppError,
+  types::{AnalysisRequest, FileBuffer}
+};
 
 /// List of allowed MIME types
 const ALLOWED_MIMES: [&str; 10] = [

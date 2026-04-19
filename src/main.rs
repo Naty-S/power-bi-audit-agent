@@ -17,10 +17,7 @@ use dotenv::dotenv;
 // };
 use serde_json::{json, Value};
 
-mod routes;
-mod services;
-mod models;
-mod utils;
+use power_bi_audit_agent::routes::*;
 
 
 #[tokio::main]

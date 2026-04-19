@@ -17,10 +17,10 @@ use axum::{
 };
 use serde_json::json;
 
-use crate::types::*;
-use crate::errors::AppError;
-use crate::file_management;
-use crate::gemini;
+use crate::models::types::*;
+use crate::models::errors::AppError;
+use crate::services::file_management;
+use crate::services::gemini;
 
 
 /// Main entry point for the /analyze endpoint.
