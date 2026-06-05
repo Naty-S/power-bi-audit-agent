@@ -18,6 +18,9 @@ pub enum AppError {
   #[error("Server configuration error: {0}")]
   ConfigError(String),
 
+  #[error("Integrity error (corrupted or : {0}")]
+  IntegrityError(String),
+
   #[error("Unknown error: {0}")]
   Unknown(String),
 }
@@ -30,6 +33,7 @@ impl IntoResponse for AppError {
       AppError::UploadError(msg) => (StatusCode::BAD_REQUEST, msg),
       AppError::GeminiError(msg) => (StatusCode::BAD_GATEWAY, msg),
       AppError::ConfigError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
+      AppError::IntegrityError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
       AppError::Unknown(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
     };
 
