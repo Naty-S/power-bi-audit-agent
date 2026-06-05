@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axum={ version = "0.8", features = ["multipart"] }               #
-tokio = { version = "1.5", features = ["full"] }                 # Async files
+axum={ version = "0.8.9", features = ["multipart"] }             #
+tokio = { version = "1.52.1", features = ["full"] }              # Async files
 tower-http = { version = "0.6", features = ["cors", "fs"] }      # Limit file size
 reqwest = { version = "0.13", features = ["json", "multipart"] } #
 serde = { version = "1.0", features = ["derive"] }               #
@@ -13,8 +13,10 @@ serde_json = "1.0"                                               #
 tracing = "0.1"                                                  # Logging
 tracing-subscriber = "0.3"                                       # Logging
 calamine = "0.34"                                                # Read Excel
-zip = "8.2"                                                      # Read Word
+zip = "8.5.1"                                                    # Read Word
 dotenv = "0.15"                                                  # Read API KEY from .env
 mime_guess = "2.0"                                               # To detect file types automatically
 thiserror = "2.0"                                                # For clean error handling
 bytes = "1.11"                                                   #
+infer = "0.19.0"                                                 # Check magic bytes
+sha2 = "0.11.0"                                                  # Checksums SHA-256
