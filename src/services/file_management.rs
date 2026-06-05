@@ -53,6 +53,10 @@ pub async fn process_files(mut form_files: Multipart) -> Result<AnalysisRequest,
         .map_err(|e| AppError::UploadError(format!("Failed to read file {}: {}", filename, e)))?
         .to_vec();
       println!("BYTES ok");
+
+      if !(data.len() > 0) {
+        return Err(AppError::UploadError(format!("File empty: {}", filename)));
+      }
       
       if !is_allowed_mime(&content_type) && !is_allowed_extension(&filename) {
         return Err(AppError::UploadError(format!("File type not supported: {}", filename)));
@@ -72,9 +76,11 @@ pub async fn process_files(mut form_files: Multipart) -> Result<AnalysisRequest,
         return Err(AppError::UploadError("Unsuported file (.doc 97), use a most recent word document".to_string()));
       }
 
-      data = text.into_bytes();
-      filename = format!("{}.txt", filename);
-      mime_type = "text/plain".to_string();
+      if ext == "xls" || ext == "xlsx" || ext == "docx" {
+        data = text.into_bytes();
+        filename = format!("{}.txt", filename);
+        mime_type = "text/plain".to_string();
+      }
       // -----------------------------------------------------------      
 
       files.push(FileBuffer { name: filename, mime_type, data });
@@ -151,7 +157,7 @@ fn word_to_text(bytes: &[u8]) -> Result<String, AppError> {
   let cursor = Cursor::new(bytes);
   let mut xml_data = String::new();
   let mut archive = ZipArchive::new(cursor)
-    .map_err(|e| AppError::UploadError(format!("Failed to open DOCX zip: {}", e)))?;
+    .map_err(|e| AppError::UploadError(format!("Failed to open DOCX: {}", e)))?;
   let mut file = archive.by_name("word/document.xml") // main text
     .map_err(|_| AppError::UploadError("Invalid DOCX format: word/document.xml not found".to_string()))?;
   
