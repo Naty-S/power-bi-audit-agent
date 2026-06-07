@@ -28,7 +28,7 @@ const ALLOWED_MIMES: [&str; 10] = [
 
 
 /// Processes the multipart form data, validates files, and returns the analysis start request
-/// to send to the AI.
+/// to send to the AI. 
 pub async fn process_files(mut form_files: Multipart) -> Result<AnalysisRequest, AppError> {
   
   println!("-----Processing files");
@@ -48,7 +48,9 @@ pub async fn process_files(mut form_files: Multipart) -> Result<AnalysisRequest,
     } else if field_name == "files[]" || field_name == "file" {
 
       let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
-      let mut filename = field.file_name().unwrap_or("unknown").to_string();      
+      println!("content_type: {}", content_type);    
+      let mut filename = field.file_name().unwrap_or("unknown").to_string();
+      println!("filename: {}", filename);    
       let mut data = field.bytes().await
         .map_err(|e| AppError::UploadError(format!("Failed to read file {}: {}", filename, e)))?
         .to_vec();
@@ -65,9 +67,10 @@ pub async fn process_files(mut form_files: Multipart) -> Result<AnalysisRequest,
 
       // Correct the MIME type if necessary
       let mut mime_type = mime_guess::from_path(&filename).first_or_octet_stream().to_string();
-      
+      println!("mime_type: {}", mime_type);    
       // --- Convert Office files to plain text ---
       let ext = filename.split('.').last().unwrap_or("").to_lowercase();
+      println!("ext: {}", ext);    
       let mut text = "No text extracted".to_string();
       
       if ext == "xls" || ext == "xlsx" { text = excel_to_text(&data)?; }
@@ -79,6 +82,7 @@ pub async fn process_files(mut form_files: Multipart) -> Result<AnalysisRequest,
       if ext == "xls" || ext == "xlsx" || ext == "docx" {
         data = text.into_bytes();
         filename = format!("{}.txt", filename);
+        println!("filename (is word/excel)?: {}", filename);
         mime_type = "text/plain".to_string();
       }
       // -----------------------------------------------------------      
