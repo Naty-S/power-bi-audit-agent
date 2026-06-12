@@ -9,7 +9,7 @@
 </head>
 
 <body class="bg-slate-900 text-white min-h-screen p-6 font-sans">
-  <div class="max-w-2xl mx-auto space-y-6">
+  <div class="max-w-[85%] mx-auto space-y-6">
 
     <!-- HEADER -->
     <div class="text-center">
@@ -51,6 +51,10 @@
           Iniciar Análisis
         </button>
       </form>
+
+      <div>
+        <div id="error_msg" class="text-xl font-mono text-red-400 font-bold"></div>
+      </div>
     </div>
 
     <!-- PHASE 2: CHAT AND RESULTS (Hidden initially) -->
@@ -80,7 +84,7 @@
 
       <!-- Chat History -->
       <div id="chat_history_box"
-        class="bg-slate-900 border border-slate-700 rounded-lg p-4 h-64 overflow-y-auto space-y-3 flex flex-col text-sm">
+        class="bg-slate-900 border border-slate-700 rounded-lg p-4 overflow-y-auto space-y-3 flex flex-col text-sm">
         <!-- Messages will appear here -->
       </div>
 
@@ -127,7 +131,7 @@
     // APPLICATION STATE
     let files_resources = null;
     let chat_history = [];
-    let current_data = { income: "0", outcome: "0" };
+    let current_data = { };
     let interaction_count = 0;
     const MAX_INTERACTIONS = 6; // 1 initial + 5 corrections
 
@@ -160,7 +164,7 @@
     initial_form.addEventListener('submit', async (e) => {
 
       e.preventDefault();
-      const prompt = document.getElementById('initial_prompt').value || "Cuales son los 2 primero números.";
+      const prompt = document.getElementById('initial_prompt').value || "";
 
       btn_analyze_initial.disabled = true;
       btn_analyze_initial.textContent = "Procesando...";
@@ -190,22 +194,42 @@
 
         // Save state
         files_resources = data.files;        
-        current_data = { income: data.income, outcome: data.outcome };
+        current_data = data;
         interaction_count++;
 
         // Update UI
         update_data_ui();
         add_message("user", prompt);
-        add_message("ai", data.ai_msg);
+        add_message("ai",
+          `- step1_audit_comparison: ${data.step1_audit_comparison}\n\n\
+           - step2_fraud_detection: ${data.step2_fraud_detection}\n\n\
+           - step3_access_anomalies: ${data.step3_access_anomalies}\n\n\
+           - step4_payroll_inconsistencies: ${data.step4_payroll_inconsistencies}\n\n\
+           - step5_financial_comparison: ${data.step5_financial_comparison}\n\n\
+           - department: ${data.department}\n\n\
+           - incidence_date: ${data.incidence_date}\n\n\
+           - deviation_type: ${data.deviation_type}\n\n\
+           - risk_level: ${data.risk_level}\n\n\
+           - risk_type: ${data.risk_type}\n\n\
+           - responsible_users: ${data.responsible_users}\n\n\
+           - user_role: ${data.user_role}\n\n\
+           - access_rights: ${data.access_rights}\n\n\
+           - data_sensitivity: ${data.data_sensitivity}\n\n\
+           - category: ${data.category}\n\n\
+           - financial_impact: ${data.financial_impact}\n\n\
+           - summary: ${data.summary}\n\n\
+           - details: ${data.details}\n\n`
+        );
 
         upload_section.classList.add('hidden');
         chat_section.classList.remove('hidden');
         update_counter();
 
       } catch (error) {
-        console.log("Error: " + error);
+        console.log(error);
         btn_analyze_initial.disabled = false;
         btn_analyze_initial.textContent = "Iniciar Análisis";
+        document.getElementById('error_msg').textContent = `${error}`
       }
     });
 
@@ -248,8 +272,8 @@
         current_data = { income: data.income, outcome: data.outcome };
         update_data_ui();
 
-        chat_history.push({ role: "ai", text: data.ai_msg });
-        add_message("ai", data.ai_msg);
+        chat_history.push({ role: "ai", text: data.summary });
+        add_message("ai", data.summary);
 
         interaction_count++;
         update_counter();

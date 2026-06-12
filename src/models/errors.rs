@@ -3,7 +3,7 @@ use axum::{
   response::{IntoResponse, Response},
   Json,
 };
-use serde_json::json;
+use serde_json::{ Value, from_str, json };
 use thiserror::Error;
 
 
@@ -37,8 +37,14 @@ impl IntoResponse for AppError {
       AppError::Unknown(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
     };
 
+    // Parse message as json
+    let error_value: Value = match from_str(&error_message) {
+      Ok(json_parsed) => json_parsed,
+      Err(_) => Value::String(error_message),
+    };
+
     // JSON response with the error message
-    let body = Json(json!({ "error": error_message }));
+    let body = Json(json!({ "error": error_value }));
 
     (status, body).into_response()
   }

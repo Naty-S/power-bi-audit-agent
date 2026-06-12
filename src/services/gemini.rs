@@ -1,5 +1,6 @@
 use reqwest::{Client, multipart::{Part, Form}};
-use serde_json::{json, Value};
+use serde::Deserialize;
+use serde_json::{json, from_value, Value};
 use std::env;
 
 use crate::utils::constants::*;
@@ -31,10 +32,24 @@ pub async fn start_analysis(analysis_req: AnalysisRequest) -> Result<FinancialAn
   let res = ask_gemini(&api_key, &files, &analysis_req.prompt, vec![]).await?;
 
   Ok(FinancialAnalysis {
-    income: res["income"].to_string(),
-    outcome: res["outcome"].to_string(),
-    currency: "u".to_string(),
-    ai_msg: res["ai_message"].to_string(),
+    step1_audit_comparison: res["step1_audit_comparison"].to_string(),
+    step2_fraud_detection: res["step2_fraud_detection"].to_string(),
+    step3_access_anomalies: res["step3_access_anomalies"].to_string(),
+    step4_payroll_inconsistencies: res["step4_payroll_inconsistencies"].to_string(),
+    step5_financial_comparison: res["step5_financial_comparison"].to_string(),
+    department: res["department"].to_string(),
+    incidence_date: res["incidence_date"].to_string(),
+    deviation_type: from_value(res["deviation_type"].clone()).expect("Format from deviation_type doesn't match enum Deviation"),
+    risk_level: from_value(res["risk_level"].clone()).expect("Format from risk_level doesn't match enum RiskLevel"),
+    risk_type: from_value(res["risk_type"].clone()).expect("Format from risk_type doesn't match enum RiskType"),
+    responsible_users: from_value::<Vec<String>>(res["responsible_users"].clone()).unwrap_or_else(|_| vec![]),
+    user_role: from_value(res["user_role"].clone()).expect("Format from user_role doesn't match enum UserRole"),
+    access_rights: from_value(res["access_rights"].clone()).expect("Format from access_rights doesn't match enum Access"),
+    data_sensitivity: from_value(res["data_sensitivity"].clone()).expect("Format from data_sensitivity doesn't match enum DataType"),
+    category: from_value(res["category"].clone()).expect("Format from category doesn't match enum FindingCategory"),
+    financial_impact: res["financial_impact"].to_string(),
+    summary: res["summary"].to_string(),
+    details: res["details"].to_string(),
     files
   })
 }
@@ -57,10 +72,24 @@ pub async fn adjust_analysis(req: ChatRequest) -> Result<FinancialAnalysis, AppE
   let res = ask_gemini(&api_key, &req.files_resources, &user_prompt, history).await?;
 
   Ok(FinancialAnalysis {
-    income: res["income"].to_string(),
-    outcome: res["outcome"].to_string(),
-    currency: "u".to_string(),
-    ai_msg: res["ai_message"].to_string(),
+    step1_audit_comparison: String::deserialize(&res["step1_audit_comparison"]).unwrap_or_default(),
+    step2_fraud_detection: String::deserialize(&res["step2_fraud_detection"]).unwrap_or_default(),
+    step3_access_anomalies: String::deserialize(&res["step3_access_anomalies"]).unwrap_or_default(),
+    step4_payroll_inconsistencies: String::deserialize(&res["step4_payroll_inconsistencies"]).unwrap_or_default(),
+    step5_financial_comparison: String::deserialize(&res["step5_financial_comparison"]).unwrap_or_default(),
+    department: String::deserialize(&res["department"]).unwrap_or_default(),
+    incidence_date: String::deserialize(&res["incidence_date"]).unwrap_or_default(),
+    deviation_type: from_value(res["deviation_type"].clone()).expect("Format from deviation_type doesn't match enum Deviation"),
+    risk_level: from_value(res["risk_level"].clone()).expect("Format from risk_level doesn't match enum RiskLevel"),
+    risk_type: from_value(res["risk_type"].clone()).expect("Format from risk_type doesn't match enum RiskType"),
+    responsible_users: from_value::<Vec<String>>(res["responsible_users"].clone()).unwrap_or_else(|_| vec![]),
+    user_role: from_value(res["user_role"].clone()).expect("Format from user_role doesn't match enum UserRole"),
+    access_rights: from_value(res["access_rights"].clone()).expect("Format from access_rights doesn't match enum Access"),
+    data_sensitivity: from_value(res["data_sensitivity"].clone()).expect("Format from data_sensitivity doesn't match enum DataType"),
+    category: from_value(res["category"].clone()).expect("Format from category doesn't match enum FindingCategory"),
+    financial_impact: String::deserialize(&res["financial_impact"]).unwrap_or_default(),
+    summary: String::deserialize(&res["summary"]).unwrap_or_default(),
+    details: String::deserialize(&res["details"]).unwrap_or_default(),
     files: req.files_resources
   })
 }
@@ -100,12 +129,13 @@ async fn upload_file_to_google(api_key: &str, file: &FileBuffer) -> Result<Strin
   // Parse URI
   let body: Value = res.json().await
     .map_err(|e| AppError::GeminiError(format!("Failed to parse upload response: {}", e)))?;
-  
+  println!("{:?}", body);
   let uri = body["file"]["uri"]
     .as_str()
     .ok_or(AppError::GeminiError("Google API did not return a file URI".to_string()))?
     .to_string();
 
+  println!("{:?}", uri);
   Ok(uri)
 }
 
