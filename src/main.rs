@@ -3,7 +3,7 @@ use axum::{
   // extract::{DefaultBodyLimit},
   Router
 };
-use tower_http::services::ServeDir;
+use tower_http::cors::{Any, CorsLayer};
 use std::net::SocketAddr;
 use dotenv::dotenv;
 
@@ -25,20 +25,24 @@ async fn main() {
   // 1. Start Logs
   tracing_subscriber::fmt::init();
 
-  // Configurar la ruta para el frontend y la API
+  let cors = CorsLayer::new()
+        .allow_origin(Any) // En producción, cambia 'Any' por la URL de tu frontend en Render
+        .allow_methods(Any)
+        .allow_headers(Any);
+
+  // Configurar la ruta para la API
   let app = Router::new()
-    // Load front
-    .fallback_service(ServeDir::new("frontend"))
 
     // The /analyze endpoint receives both initial upload (Multipart) 
     // and chat corrections (JSON)
     .route("/analyze", post(analyze::handler))
 
     // Endpoint to format the final file
-    .route("/generate", post(generate::handler));
+    .route("/generate", post(generate::handler))
     
     // TODO: Límite de tamaño de archivo (10MB). Multiple files, how, total?
     // .layer(DefaultBodyLimit::max(10 * 1024 * 1024));
+    .layer(cors); 
 
   // Start server
   let addr = SocketAddr::from(([0, 0, 0, 0], 9090));
