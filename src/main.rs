@@ -3,6 +3,7 @@ use axum::{
   // extract::{DefaultBodyLimit},
   Router
 };
+use reqwest::Method;
 use tower_http::cors::{Any, CorsLayer};
 use std::net::SocketAddr;
 use dotenv::dotenv;
@@ -26,9 +27,9 @@ async fn main() {
   tracing_subscriber::fmt::init();
 
   let cors = CorsLayer::new()
-        .allow_origin(Any) // En producción, cambia 'Any' por la URL de tu frontend en Render
-        .allow_methods(Any)
-        .allow_headers(Any);
+    .allow_origin(["https://shiori-web.onrender.com".parse().unwrap()]) 
+    .allow_methods([Method::GET, Method::POST])
+    .allow_headers(Any/* [AUTHORIZATION, ACCEPT] */);
 
   // Configurar la ruta para la API
   let app = Router::new()
