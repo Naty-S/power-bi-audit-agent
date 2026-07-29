@@ -181,7 +181,7 @@
 
         console.log("form d:", form_data.entries());
         
-        const response = await fetch('/analyze', { method: 'POST', body: form_data });
+        const response = await fetch('https://shiori-api.onrender.com/analyze', { method: 'POST', body: form_data });
 
         console.log("Genera Error cuando se adjunta un archivo con caracteres especiales como el '%' WHY?");
         console.log(response);
@@ -257,7 +257,7 @@
         console.log(payload);
         
 
-        const response = await fetch('/analyze', {
+        const response = await fetch('https://shiori-api.onrender.com/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
