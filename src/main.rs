@@ -3,10 +3,14 @@ use axum::{
   // extract::{DefaultBodyLimit},
   Router
 };
-use reqwest::Method;
-use tower_http::cors::{Any, CorsLayer};
+use reqwest::{
+  Method,
+  header::{ AUTHORIZATION, ACCEPT, CONTENT_TYPE }
+};
+use tower_http::cors::{CorsLayer};
 use std::net::SocketAddr;
 use dotenv::dotenv;
+use std::env;
 
 // use std::path::Path;
 // use tokio::fs;
@@ -27,9 +31,13 @@ async fn main() {
   tracing_subscriber::fmt::init();
 
   let cors = CorsLayer::new()
-    .allow_origin(["https://shiori-web.onrender.com".parse().unwrap()]) 
-    .allow_methods([Method::GET, Method::POST])
-    .allow_headers(Any/* [AUTHORIZATION, ACCEPT] */);
+    .allow_origin([
+      "https://shiori-web.onrender.com".parse().unwrap(),
+      "http://localhost:5173".parse().unwrap(),
+      "http://localhost:8080".parse().unwrap()
+    ]) 
+    .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+    .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
 
   // Configurar la ruta para la API
   let app = Router::new()
@@ -46,8 +54,11 @@ async fn main() {
     .layer(cors); 
 
   // Start server
-  let addr = SocketAddr::from(([0, 0, 0, 0], 9090));
-  println!("🚀 Server at http://localhost:9090");
+  // Render inyecta el puerto automáticamente. Si no existe (estás en local), usará el 8080.
+  let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+  let addr = format!("0.0.0.0:{}", port);
+    
+  println!("🚀 Server at http://{}", addr);
 
   let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
   axum::serve(listener, app).await.unwrap();
