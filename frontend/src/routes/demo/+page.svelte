@@ -1,13 +1,12 @@
-<script lang="ts">
-  let { api_url } = $props();
-</script>
+<!DOCTYPE html>
+<html lang="es">
 
-<!-- <head>
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SHIORRI Agent</title>
   <script src="https://cdn.tailwindcss.com"></script>
-</head> -->
+</head>
 
 <body class="bg-slate-900 text-white min-h-screen p-6 font-sans">
   <div class="mt-[10%] max-w-[85%] mx-auto space-y-6">
@@ -129,7 +128,6 @@
   </div>
 
   <script>
-    let api_url="https://shiori-api-i3dn.onrender.com";
     // APPLICATION STATE
     let files_resources = null;
     let chat_history = [];
@@ -183,7 +181,7 @@
 
         console.log("form d:", form_data.entries());
         
-        const response = await fetch(`${api_url}/analyze`, { method: 'POST', body: form_data });
+        const response = await fetch('https://shiori-api-i3dn.onrender.com/analyze', { method: 'POST', body: form_data });
 
         console.log("Genera Error cuando se adjunta un archivo con caracteres especiales como el '%' WHY?");
         console.log(response);
@@ -259,7 +257,7 @@
         console.log(payload);
         
 
-        const response = await fetch(`${api_url}/analyze`, {
+        const response = await fetch('https://shiori-api-i3dn.onrender.com/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -382,3 +380,5 @@
     }
   </script>
 </body>
+
+</html>
