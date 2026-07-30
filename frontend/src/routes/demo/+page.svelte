@@ -129,7 +129,7 @@
   </div>
 
   <script>
-    let api_url="https://shiori-api.onrender.com";
+    let api_url="https://shiori-api-i3dn.onrender.com";
     // APPLICATION STATE
     let files_resources = null;
     let chat_history = [];
